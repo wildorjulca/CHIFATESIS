@@ -1,49 +1,36 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import { Menu } from '@/types/menu.types';
+import { Bebida } from '@/types/bebida.types';
 
-interface ProductCardProps {
-  product: Menu;
-  onAddToCart?: (product: Menu) => void;
+interface BebidaCardProps {
+  bebida: Bebida;
+  // onAddToCart?: (product: Menu) => void;
 }
 
-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export default function BebidaCard({ bebida  }: BebidaCardProps) {
   return (
     <View style={styles.card}>
-      {/* Imagen a la izquierda */}
-      <Image
-        style={styles.image}
-        source={{ 
-          uri: product.imagen_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
-        }}
-        resizeMode="cover"
-      />
+     
       
       {/* Información en el centro */}
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={2}>
-          {product.nombre_plato}
+          {bebida.nombre_bebida}
         </Text>
         <Text style={styles.description} numberOfLines={2}>
-          {product.descripcion}
+          {bebida.descripcion}
         </Text>
         
-        <View style={styles.details}>
-          <Text style={styles.time}>⏱ {product.tiempo_preparacion} min</Text>
-          {product.oferta && (
-            <View style={styles.ofertaTag}>
-              <Text style={styles.ofertaText}>OFERTA</Text>
-            </View>
-          )}
-        </View>
+       
         
-        <Text style={styles.price}>S/ {Number(product.precio).toFixed(2)}</Text>
+        <Text style={styles.price}>S/ {Number(bebida.precio).toFixed(2)}</Text>
       </View>
 
       {/* Botón a la derecha */}
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => onAddToCart?.(product)}
+        // onPress={() => onAddToCart?.(product)}
       >
         <Plus color="#fff" size={20} />
       </TouchableOpacity>

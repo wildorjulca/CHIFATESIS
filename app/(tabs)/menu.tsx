@@ -11,11 +11,15 @@ import { supabase } from '@/lib/supabase';
 import { Product } from '@/types/database.types';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
+import { useMenu } from '@/hooks/menu/useMenu';
 
 export default function Menu() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+
+
+  const  queryMenu =  useMenu()
 
   useEffect(() => {
     loadProducts();
@@ -43,7 +47,7 @@ export default function Menu() {
     Alert.alert('Éxito', `${product.name} agregado al carrito`);
   };
 
-  if (loading) {
+  if (queryMenu.isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#e63946" />
@@ -51,13 +55,14 @@ export default function Menu() {
     );
   }
 
+  console.log(queryMenu)
   return (
     <View style={styles.container}>
       <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
+        data={queryMenu.data}
+        keyExtractor={(item) => item.id_menu.toString()}
         renderItem={({ item }) => (
-          <ProductCard product={item} onAddToCart={handleAddToCart} />
+          <ProductCard product={item}  />
         )}
         contentContainerStyle={styles.list}
         ListEmptyComponent={

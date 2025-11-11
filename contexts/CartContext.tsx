@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { CartItem, Product } from '@/types/database.types';
+import { chifaProducts } from '@/app/data/productsDate';
 
 interface CartContextType {
   cart: CartItem[];
@@ -13,7 +14,8 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(chifaProducts);
+
 
   const addToCart = (product: Product) => {
     setCart((currentCart) => {

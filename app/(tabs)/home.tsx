@@ -2,13 +2,16 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Utensils, Coffee, ShoppingCart, CreditCard, BarChart3, LogOut } from 'lucide-react-native';
+import { useAuthStore } from '@/store/auth/auth-store';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
+  // const { user, signOut } = useAuth();
+  const {  user, clearUser} = useAuthStore()
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
+    // await signOut();
+    clearUser()
     router.replace('/login');
   };
 
@@ -24,8 +27,8 @@ export default function Home() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.welcomeText}>Bienvenido</Text>
-        <Text style={styles.userName}>{user?.name}</Text>
-        <Text style={styles.userRole}>Rol: {user?.role}</Text>
+        <Text style={styles.userName}>{user?.correo}</Text>
+        <Text style={styles.userRole}>Rol: {user?.rol}</Text>
       </View>
 
       <View style={styles.grid}>

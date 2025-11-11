@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthMutation } from '@/hooks/auth/useAuthMutation';
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,6 +23,9 @@ export default function Login() {
 
   const { signIn, signUp } = useAuth();
   const router = useRouter();
+
+  // 
+  const authMutation = useAuthMutation()
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -38,13 +42,21 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        await signUp(email, password, name, role);
-        Alert.alert('Éxito', 'Cuenta creada correctamente');
-      } else {
-        await signIn(email, password);
+
+      const user = {
+        correo: email,
+        clave: password
       }
-      router.replace('/(tabs)');
+      authMutation.mutate(user)
+      // if (isSignUp) {
+      //   await signUp(email, password, name, role);
+      //   Alert.alert('Éxito', 'Cuenta creada correctamente');
+      // } else {
+      //   await signIn(email, password);
+      // }
+      // router.replace('/(tabs)/home');
+
+
     } catch (err: any) {
       setError(err.message || 'Error al autenticar');
     } finally {
@@ -67,6 +79,9 @@ export default function Login() {
         </Text>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {authMutation.error ? <Text style={styles.errorText}>{authMutation.error.message}</Text> : null}
+
+        
 
         {isSignUp && (
           <TextInput
@@ -123,9 +138,9 @@ export default function Login() {
         )}
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button]}
           onPress={handleAuth}
-          disabled={loading}
+          disabled={authMutation.isPending}
         >
           <Text style={styles.buttonText}>
             {loading ? 'Cargando...' : isSignUp ? 'Registrarse' : 'Ingresar'}

@@ -12,8 +12,8 @@ export interface Product {
   description: string;
   price: number;
   category: 'menu' | 'bebidas';
-  image_url: string;
-  created_at: string;
+  image_url?: string;
+  created_at?: string;
 }
 
 export interface Order {
