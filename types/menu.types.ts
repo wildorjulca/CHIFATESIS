@@ -1,12 +1,16 @@
-export interface Menu  {
+export interface Menu {
   id_menu: number;
   nombre_plato: string;
   descripcion: string;
-  precio: string; // o number si lo conviertes antes de usarlo
+  precio: string; // 👈 si viene como string del backend, mantenlo así
+  categoria: string;
   tiempo_preparacion: number;
+  disponible: boolean;
+  imagen_url: string;
   oferta: boolean;
-  creado_en: string; // formato ISO date
-  imagen_url?: string;
+  descuento: string | null;
+  creado_en: string; // o Date si lo parseas
+  actualizado_en: string; // o Date si lo parseas
 };
 
 export type MenuResponse = {

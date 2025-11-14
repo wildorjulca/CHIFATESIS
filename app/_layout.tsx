@@ -19,6 +19,20 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="login" />
+            <Stack.Screen
+              options={{
+                animation: "slide_from_right",
+              }}
+              name='prueba' />
+            <Stack.Screen name='menuOrderScreen' />
+            <Stack.Screen name='ConfirmOrder' />
+            <Stack.Screen name='PedidoSuccesScreen' />
+            <Stack.Screen name='CustomerInfoScreen' />
+            <Stack.Screen name='PaymentMethodScreen' />
+            <Stack.Screen  name='PedidosPorCobrar'/>
+            <Stack.Screen  name='DetallePedidoScreen'/>
+            <Stack.Screen  name='ProcesarPagoScreen'/>
+            <Stack.Screen  name='GestionCocinaScreen'/>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="+not-found" />
           </Stack>

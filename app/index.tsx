@@ -14,7 +14,9 @@ export default function Index() {
       if (user) {
         router.replace('/(tabs)/home');
       } else {
+        // router.replace('/login');
         router.replace('/login');
+
       }
     }, 500); // breve delay para permitir que el layout monte
 
