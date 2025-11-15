@@ -18,27 +18,14 @@ export interface bodyPedido {
     }>
 }
 
-
-
-export const savePedido = async (data: bodyPedido) => {
+export const getAllUsuariosService = async () => {
     await sleep(2)
     try {
-        const response = await instance.post("/savePedido", data)
-        return response.data
+        const response = await instance.get("/getAllUsuarios")
+
+        return response.data.data
     } catch (error: any) {
         console.log(error.response)
-        throw new Error("Error al guardar el pedido");
-    }
-}
-
-export const getPedidosDetallesPorPagarService = async () => {
-    await sleep(2)
-    try {
-        const response = await instance.get("/getPedidosDetallesPorPagar")
-
-        return response.data.data.pedidos 
-    } catch (error: any) {
-        console.log(error.response)
-        throw new Error("Error al cargar pedidos");
+        throw new Error("Error al cargar usuarios");
     }
 }

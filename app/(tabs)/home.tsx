@@ -51,7 +51,7 @@ export default function Home() {
     {
       title: 'Gestión Cocina',
       icon: ChefHat,
-      route: '/gestion-cocina',
+      route: '/GestionCocinaScreen',
       color: '#f77f00',
       permission: 'gestion-cocina',
       description: 'Ver pedidos en cocina',
@@ -60,7 +60,7 @@ export default function Home() {
     {
       title: 'Gestión Usuarios',
       icon: Users,
-      route: '/gestion-usuarios',
+      route: '/GestionUsuarioScreen',
       color: '#7209b7',
       permission: 'gestion-usuarios',
       description: 'Administrar usuarios',

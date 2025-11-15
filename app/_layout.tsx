@@ -33,6 +33,7 @@ export default function RootLayout() {
             <Stack.Screen  name='DetallePedidoScreen'/>
             <Stack.Screen  name='ProcesarPagoScreen'/>
             <Stack.Screen  name='GestionCocinaScreen'/>
+            <Stack.Screen  name='GestionUsuarioScreen'/>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="+not-found" />
           </Stack>
