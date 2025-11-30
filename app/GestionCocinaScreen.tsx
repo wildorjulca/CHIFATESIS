@@ -2,159 +2,58 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Clock, CheckCircle, AlertCircle, ChefHat, Filter, RotateCcw, Utensils, Users, Timer } from 'lucide-react-native';
-
-// Simulación de datos basada en tu schema Prisma
-const mockPedidosCocina = [
-  {
-    id_pedido: 1,
-    numero_pedido: 'PED-001',
-    nombre_cliente: 'Juan Pérez García',
-    mesa: 'Mesa 1',
-    items: [
-      { 
-        id_item_pedido: 1,
-        nombre: 'Aeropuerto Especial', 
-        cantidad: 2, 
-        tiempo_preparacion: 20, 
-        estado: 'en_preparacion',
-        observaciones: 'Sin ají'
-      },
-      { 
-        id_item_pedido: 2,
-        nombre: 'Inca Kola 500ml', 
-        cantidad: 2, 
-        tiempo_preparacion: 2, 
-        estado: 'preparado'
-      }
-    ],
-    estado: 'en_preparacion',
-    fecha_pedido: new Date('2024-01-15 12:30:00'),
-    observaciones: 'Sin ají por favor'
-  },
-  {
-    id_pedido: 2,
-    numero_pedido: 'PED-002',
-    nombre_cliente: 'María López Soto',
-    mesa: 'Mesa 3',
-    items: [
-      { 
-        id_item_pedido: 3,
-        nombre: 'Tallarín Saltado Especial', 
-        cantidad: 1, 
-        tiempo_preparacion: 15, 
-        estado: 'preparado'
-      }
-    ],
-    estado: 'preparado',
-    fecha_pedido: new Date('2024-01-15 13:15:00'),
-    observaciones: null
-  },
-  {
-    id_pedido: 3,
-    numero_pedido: 'PED-003',
-    nombre_cliente: 'Carlos Rodríguez',
-    mesa: 'Mesa 2',
-    items: [
-      { 
-        id_item_pedido: 4,
-        nombre: 'Arroz Chaufa de Pollo', 
-        cantidad: 3, 
-        tiempo_preparacion: 12, 
-        estado: 'pendiente'
-      },
-      { 
-        id_item_pedido: 5,
-        nombre: 'Chicha Morada 1L', 
-        cantidad: 1, 
-        tiempo_preparacion: 2, 
-        estado: 'pendiente'
-      }
-    ],
-    estado: 'pendiente',
-    fecha_pedido: new Date('2024-01-15 14:00:00'),
-    observaciones: null
-  },
-  {
-    id_pedido: 4,
-    numero_pedido: 'PED-004',
-    nombre_cliente: 'Cliente Ocasional',
-    mesa: 'Mesa 4',
-    items: [
-      { 
-        id_item_pedido: 6,
-        nombre: 'Wantán Frito (8 unidades)', 
-        cantidad: 1, 
-        tiempo_preparacion: 10, 
-        estado: 'pendiente'
-      }
-    ],
-    estado: 'pendiente',
-    fecha_pedido: new Date('2024-01-15 14:30:00'),
-    observaciones: null
-  }
-];
+import { usePedidoCocina } from '@/hooks/cocina/usePedidoCocina';
 
 const GestionCocinaScreen = () => {
   const router = useRouter();
-  const [pedidos, setPedidos] = useState(mockPedidosCocina);
+  const { data: pedidos, isLoading, error, refetch } = usePedidoCocina();
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'pendiente' | 'en_preparacion' | 'preparado'>('todos');
   const [refreshing, setRefreshing] = useState(false);
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
 
-  // Simular actualización en tiempo real
+  // Actualizar cada minuto y recargar datos cada 30 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       setTiempoTranscurrido(prev => prev + 1);
     }, 60000);
 
-    return () => clearInterval(interval);
-  }, []);
+    // Recargar datos automáticamente cada 30 segundos
+    const reloadInterval = setInterval(() => {
+      refetch();
+    }, 30000);
 
-  const onRefresh = () => {
+    return () => {
+      clearInterval(interval);
+      clearInterval(reloadInterval);
+    };
+  }, [refetch]);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    // Simular fetch de datos
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await refetch();
+    setRefreshing(false);
   };
 
   const filtrarPedidos = () => {
+    if (!pedidos) return [];
     if (filtroEstado === 'todos') return pedidos;
     return pedidos.filter(pedido => pedido.estado === filtroEstado);
   };
 
   const cambiarEstadoItem = (pedidoId: number, itemId: number, nuevoEstado: string) => {
-    setPedidos(prev => prev.map(pedido => {
-      if (pedido.id_pedido === pedidoId) {
-        const itemsActualizados = pedido.items.map(item => 
-          item.id_item_pedido === itemId ? { ...item, estado: nuevoEstado } : item
-        );
-        
-        // Actualizar estado general del pedido
-        const todosPreparados = itemsActualizados.every(item => item.estado === 'preparado');
-        const algunoEnPreparacion = itemsActualizados.some(item => item.estado === 'en_preparacion');
-        
-        let estadoGeneral = pedido.estado;
-        if (todosPreparados) {
-          estadoGeneral = 'preparado';
-        } else if (algunoEnPreparacion) {
-          estadoGeneral = 'en_preparacion';
-        } else {
-          estadoGeneral = 'pendiente';
-        }
-
-        return { ...pedido, items: itemsActualizados, estado: estadoGeneral };
-      }
-      return pedido;
-    }));
+    // Aquí implementarías la llamada a la API para cambiar el estado
+    console.log(`Cambiando estado del item ${itemId} del pedido ${pedidoId} a ${nuevoEstado}`);
+    // TODO: Implementar llamada a la API
   };
 
   const marcarPedidoEntregado = (pedidoId: number) => {
-    setPedidos(prev => prev.filter(pedido => pedido.id_pedido !== pedidoId));
+    // Aquí implementarías la llamada a la API para marcar como entregado
+    console.log(`Marcando pedido ${pedidoId} como entregado`);
+    // TODO: Implementar llamada a la API
   };
 
-  const calcularTiempoEspera = (fechaPedido: Date) => {
-    const diffMs = new Date().getTime() - fechaPedido.getTime();
+  const calcularTiempoEspera = (fechaPedido: string) => {
+    const diffMs = new Date().getTime() - new Date(fechaPedido).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     return diffMins;
   };
@@ -164,6 +63,8 @@ const GestionCocinaScreen = () => {
       case 'pendiente': return '#f59e0b';
       case 'en_preparacion': return '#3b82f6';
       case 'preparado': return '#10b981';
+      case 'entregado': return '#6b7280';
+      case 'cancelado': return '#ef4444';
       default: return '#6b7280';
     }
   };
@@ -178,6 +79,10 @@ const GestionCocinaScreen = () => {
   };
 
   const getEstadisticas = () => {
+    if (!pedidos) {
+      return { total: 0, pendientes: 0, en_preparacion: 0, preparados: 0 };
+    }
+
     return {
       total: pedidos.length,
       pendientes: pedidos.filter(p => p.estado === 'pendiente').length,
@@ -186,8 +91,45 @@ const GestionCocinaScreen = () => {
     };
   };
 
+  // Estados para los items (manejo local hasta implementar API)
+  const [estadosItems, setEstadosItems] = useState<Record<number, string>>({});
+
+  const getEstadoItem = (itemId: number) => {
+    return estadosItems[itemId] || 'pendiente';
+  };
+
+  const cambiarEstadoItemLocal = (pedidoId: number, itemId: number, nuevoEstado: string) => {
+    setEstadosItems(prev => ({
+      ...prev,
+      [itemId]: nuevoEstado
+    }));
+  };
+
   const pedidosFiltrados = filtrarPedidos();
   const stats = getEstadisticas();
+
+  if (isLoading && !pedidos) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingSpinner} />
+        <Text style={styles.loadingText}>Cargando pedidos...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <AlertCircle size={48} color="#ef4444" />
+        <Text style={styles.errorText}>Error al cargar los pedidos</Text>
+        <Text style={styles.errorSubText}>{error.message}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+          <RotateCcw size={20} color="#fff" />
+          <Text style={styles.retryButtonText}>Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -291,7 +233,7 @@ const GestionCocinaScreen = () => {
       </View>
 
       {/* Lista de Pedidos */}
-      <ScrollView 
+      <ScrollView
         style={styles.pedidosContainer}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -302,7 +244,9 @@ const GestionCocinaScreen = () => {
             <View style={styles.emptyIcon}>
               <Utensils size={64} color="#d1d5db" strokeWidth={1.5} />
             </View>
-            <Text style={styles.emptyText}>No hay pedidos {filtroEstado !== 'todos' ? `en estado ${filtroEstado}` : 'pendientes'}</Text>
+            <Text style={styles.emptyText}>
+              {!pedidos ? 'Cargando...' : `No hay pedidos ${filtroEstado !== 'todos' ? `en estado ${filtroEstado}` : 'pendientes'}`}
+            </Text>
             <Text style={styles.emptySubText}>
               Los nuevos pedidos aparecerán aquí automáticamente
             </Text>
@@ -335,7 +279,9 @@ const GestionCocinaScreen = () => {
                           <Users size={14} color="#6b7280" strokeWidth={2} />
                         </View>
                         <Text style={styles.pedidoCliente}>{pedido.nombre_cliente}</Text>
-                        <Text style={styles.pedidoMesa}>• {pedido.mesa}</Text>
+                        {pedido.mesa && (
+                          <Text style={styles.pedidoMesa}>• {pedido.mesa.nombre_mesa}</Text>
+                        )}
                       </View>
                     </View>
                   </View>
@@ -347,9 +293,9 @@ const GestionCocinaScreen = () => {
                         <Timer size={14} color="#6b7280" strokeWidth={2} />
                       </View>
                       <Text style={styles.tiempoText}>
-                        Hace {tiempoEspera} min • {pedido.fecha_pedido.toLocaleTimeString('es-ES', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
+                        Hace {tiempoEspera} min • {new Date(pedido.fecha_pedido).toLocaleTimeString('es-ES', {
+                          hour: '2-digit',
+                          minute: '2-digit'
                         })}
                       </Text>
                     </View>
@@ -366,7 +312,7 @@ const GestionCocinaScreen = () => {
 
                   {/* Items del Pedido */}
                   <View style={styles.itemsContainer}>
-                    {pedido.items.map((item, index) => (
+                    {pedido.items.map((item) => (
                       <View key={item.id_item_pedido} style={styles.itemRow}>
                         <View style={styles.itemInfo}>
                           <View style={styles.itemCantidadContainer}>
@@ -375,37 +321,39 @@ const GestionCocinaScreen = () => {
                           <View style={styles.itemDetails}>
                             <Text style={styles.itemNombre}>{item.nombre}</Text>
                             <View style={styles.itemMeta}>
-                              <Text style={styles.itemTiempo}>~{item.tiempo_preparacion}min</Text>
+                              {item.tiempo_preparacion && (
+                                <Text style={styles.itemTiempo}>~{item.tiempo_preparacion}min</Text>
+                              )}
                               {item.observaciones && (
                                 <Text style={styles.itemObservaciones}>• {item.observaciones}</Text>
                               )}
                             </View>
                           </View>
                         </View>
-                        
+
                         <View style={styles.itemActions}>
                           <View style={[
                             styles.itemEstadoBadge,
-                            { backgroundColor: `${getColorEstado(item.estado)}20` }
+                            { backgroundColor: `${getColorEstado(getEstadoItem(item.id_item_pedido))}20` }
                           ]}>
-                            <Text style={[styles.itemEstadoText, { color: getColorEstado(item.estado) }]}>
-                              {item.estado.replace('_', ' ')}
+                            <Text style={[styles.itemEstadoText, { color: getColorEstado(getEstadoItem(item.id_item_pedido)) }]}>
+                              {getEstadoItem(item.id_item_pedido).replace('_', ' ')}
                             </Text>
                           </View>
-                          
-                          {item.estado === 'pendiente' && (
-                            <TouchableOpacity 
+
+                          {getEstadoItem(item.id_item_pedido) === 'pendiente' && (
+                            <TouchableOpacity
                               style={[styles.estadoBtn, { backgroundColor: '#3b82f6' }]}
-                              onPress={() => cambiarEstadoItem(pedido.id_pedido, item.id_item_pedido, 'en_preparacion')}
+                              onPress={() => cambiarEstadoItemLocal(pedido.id_pedido, item.id_item_pedido, 'en_preparacion')}
                             >
                               <Text style={styles.estadoBtnText}>Comenzar</Text>
                             </TouchableOpacity>
                           )}
-                          
-                          {item.estado === 'en_preparacion' && (
-                            <TouchableOpacity 
+
+                          {getEstadoItem(item.id_item_pedido) === 'en_preparacion' && (
+                            <TouchableOpacity
                               style={[styles.estadoBtn, { backgroundColor: '#10b981' }]}
-                              onPress={() => cambiarEstadoItem(pedido.id_pedido, item.id_item_pedido, 'preparado')}
+                              onPress={() => cambiarEstadoItemLocal(pedido.id_pedido, item.id_item_pedido, 'preparado')}
                             >
                               <Text style={styles.estadoBtnText}>Listo</Text>
                             </TouchableOpacity>
@@ -417,7 +365,7 @@ const GestionCocinaScreen = () => {
 
                   {/* Acción de entrega */}
                   {pedido.estado === 'preparado' && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.entregarBtn}
                       onPress={() => marcarPedidoEntregado(pedido.id_pedido)}
                     >
@@ -793,6 +741,60 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 20,
+  },
+    loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#e2e8f0',
+    borderTopColor: '#3b82f6',
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 6,
   },
 });
 
