@@ -81,7 +81,7 @@ export default function Login() {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         {authMutation.error ? <Text style={styles.errorText}>{authMutation.error.message}</Text> : null}
 
-        
+
 
         {isSignUp && (
           <TextInput
@@ -138,12 +138,15 @@ export default function Login() {
         )}
 
         <TouchableOpacity
-          style={[styles.button]}
+          style={[
+            styles.button,
+            (loading || authMutation.isPending) && styles.buttonDisabled,
+          ]}
           onPress={handleAuth}
           disabled={authMutation.isPending}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Cargando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
+            {authMutation.isPending ? 'Cargando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
           </Text>
         </TouchableOpacity>
 

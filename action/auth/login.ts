@@ -16,6 +16,7 @@ export const Authenticate = async (user: Props): Promise<UserInfo> => {
         return response.data
 
     } catch (error: any) {
+        console.log("ERROR EN AUTHENTICATE", error)
         if (error.response) {
             throw {
                 status: error.response.status,

@@ -36,7 +36,7 @@ export const getPedidosDetallesPorPagarService = async () => {
     try {
         const response = await instance.get("/getPedidosDetallesPorPagar")
 
-        return response.data.data.pedidos 
+        return response.data.data.pedidos
     } catch (error: any) {
         console.log(error.response)
         throw new Error("Error al cargar pedidos");

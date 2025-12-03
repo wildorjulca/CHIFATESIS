@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     TextInput,
     Alert,
+    Modal,
+    Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +20,9 @@ import {
     ArrowLeft,
     CheckCircle
 } from 'lucide-react-native';
+import { useAuthStore } from '@/store/auth/auth-store';
+import { usePagoMutation } from '@/hooks/pago/usePagoMutation';
+import { usePedidoDetallePorPagar } from '@/hooks/pedido/usePedidoDetallePorPagar';
 
 // Tipos (los mismos que antes)
 type MetodoPago = 'efectivo' | 'yape' | 'plin' | 'tarjeta' | 'transferencia';
@@ -39,14 +44,63 @@ const ProcesarPagoScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { pedido } = route.params as RouteParams;
+    const { user } = useAuthStore()
+
+    console.log('Pedido recibido en ProcesarPagoScreen:', pedido);
 
     const [metodoPago, setMetodoPago] = useState<MetodoPago>('efectivo');
     const [montoRecibido, setMontoRecibido] = useState(pedido.total.toString());
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [comprobante, setComprobante] = useState('');
+    const scaleAnim = new Animated.Value(0.8);
+    const opacityAnim = new Animated.Value(0);
+
+    const pagoMutation = usePagoMutation();
+    const querypedidoDetailsPorGagar = usePedidoDetallePorPagar()
+
+    // Animaciones para el modal
+    useEffect(() => {
+        if (showSuccessModal) {
+            // Resetear animaciones
+            scaleAnim.setValue(0.8);
+            opacityAnim.setValue(0);
+
+            // Animación de entrada
+            Animated.parallel([
+                Animated.spring(scaleAnim, {
+                    toValue: 1,
+                    tension: 50,
+                    friction: 7,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(opacityAnim, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+
+            // Cerrar automáticamente después de 2 segundos
+            const timer = setTimeout(() => {
+                cerrarModalYRegresar();
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [showSuccessModal]);
 
     const calcularCambio = () => {
         if (!montoRecibido) return 0;
         const monto = parseFloat(montoRecibido) || 0;
         return monto - pedido.total;
+    };
+
+    const cerrarModalYRegresar = () => {
+        setShowSuccessModal(false);
+        // Regresar después de un pequeño delay para que se vea la animación de salida
+        setTimeout(() => {
+            navigation.goBack();
+        }, 300);
     };
 
     const confirmarPago = () => {
@@ -63,14 +117,35 @@ const ProcesarPagoScreen = () => {
             return;
         }
 
-        // Simular procesamiento de pago
-        const comprobante = `B${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+        const comprobanteGenerado = `B${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+        setComprobante(comprobanteGenerado);
 
-        Alert.alert(
-            'Pago Exitoso',
-            `Pago procesado correctamente\nComprobante: ${comprobante}`,
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
+        const paymentDetails = {
+            id_pedido: pedido.id_pedido,
+            id_cajero: user?.id,
+            metodo_pago: metodoPago,
+            monto: pedido.total,
+            monto_recibido: metodoPago === 'efectivo' ? parseFloat(montoRecibido) || 0 : pedido.total,
+            cambio: metodoPago === 'efectivo' ? calcularCambio() : 0,
+            comprobante: comprobanteGenerado,
+            pagado: true,
+        };
+
+        console.log('Procesando pago con los siguientes detalles:');
+        console.log('Detalles del Pago:', paymentDetails);
+
+        pagoMutation.mutate(paymentDetails, {
+            onSuccess: (data) => {
+                console.log('Pago exitoso:', data);
+                // Mostrar modal de éxito
+                querypedidoDetailsPorGagar.refetch()
+                setShowSuccessModal(true);
+            },
+            onError: (error) => {
+                console.error('Error en pago:', error);
+                Alert.alert('Error', 'No se pudo procesar el pago. Intente nuevamente.');
+            }
+        });
     };
 
     const getMetodoPagoIcon = (metodo: MetodoPago) => {
@@ -97,14 +172,18 @@ const ProcesarPagoScreen = () => {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => navigation.goBack()}
+                    disabled={pagoMutation.isPending}
+                >
                     <ArrowLeft color="#6b7280" size={24} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Procesar Pago</Text>
                 <View style={styles.headerSpacer} />
             </View>
 
-            <ScrollView 
+            <ScrollView
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.contentContainer}
@@ -119,8 +198,8 @@ const ProcesarPagoScreen = () => {
                 <View style={styles.metodoPagoSection}>
                     <Text style={styles.sectionTitle}>Método de Pago</Text>
                     <View style={styles.metodosContainer}>
-                        <ScrollView 
-                            horizontal 
+                        <ScrollView
+                            horizontal
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.metodosContent}
                         >
@@ -132,11 +211,14 @@ const ProcesarPagoScreen = () => {
                                         metodoPago === metodo && styles.metodoOptionSelected
                                     ]}
                                     onPress={() => {
-                                        setMetodoPago(metodo);
-                                        if (metodo !== 'efectivo') {
-                                            setMontoRecibido(pedido.total.toString());
+                                        if (!pagoMutation.isPending) {
+                                            setMetodoPago(metodo);
+                                            if (metodo !== 'efectivo') {
+                                                setMontoRecibido(pedido.total.toString());
+                                            }
                                         }
                                     }}
+                                    disabled={pagoMutation.isPending}
                                 >
                                     {getMetodoPagoIcon(metodo)}
                                     <Text style={[
@@ -155,12 +237,16 @@ const ProcesarPagoScreen = () => {
                     <View style={styles.montoSection}>
                         <Text style={styles.sectionTitle}>Monto Recibido</Text>
                         <TextInput
-                            style={styles.montoInput}
+                            style={[
+                                styles.montoInput,
+                                pagoMutation.isPending && styles.disabledInput
+                            ]}
                             placeholder="0.00"
                             value={montoRecibido}
                             onChangeText={setMontoRecibido}
                             keyboardType="decimal-pad"
                             placeholderTextColor="#9ca3af"
+                            editable={!pagoMutation.isPending}
                         />
                         {montoRecibido && (
                             <View style={styles.cambioContainer}>
@@ -177,21 +263,28 @@ const ProcesarPagoScreen = () => {
                     </View>
                 )}
 
+                {pagoMutation.isError && (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>Error: {JSON.stringify(pagoMutation.error)}</Text>
+                    </View>
+                )}
+
                 <View style={styles.confirmarSection}>
                     <TouchableOpacity
                         style={[
                             styles.confirmarButton,
-                            (metodoPago === 'efectivo' && calcularCambio() < 0) && styles.confirmarButtonDisabled
+                            (metodoPago === 'efectivo' && calcularCambio() < 0) && styles.confirmarButtonDisabled,
+                            pagoMutation.isPending && styles.confirmarButtonDisabled
                         ]}
                         onPress={confirmarPago}
-                        disabled={metodoPago === 'efectivo' && calcularCambio() < 0}
+                        disabled={pagoMutation.isPending || (metodoPago === 'efectivo' && calcularCambio() < 0)}
                     >
                         <DollarSign color="#fff" size={20} />
                         <Text style={styles.confirmarButtonText}>
-                            Confirmar Pago - S/. {pedido.total.toFixed(2)}
+                            {pagoMutation.isPending ? 'Procesando...' : `Confirmar Pago - S/. ${pedido.total.toFixed(2)}`}
                         </Text>
                     </TouchableOpacity>
-                    
+
                     {(metodoPago === 'efectivo' && calcularCambio() < 0) && (
                         <Text style={styles.errorText}>
                             El monto recibido es insuficiente
@@ -199,6 +292,37 @@ const ProcesarPagoScreen = () => {
                     )}
                 </View>
             </ScrollView>
+
+            {/* Modal de éxito */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={showSuccessModal}
+                onRequestClose={cerrarModalYRegresar}
+            >
+                <View style={styles.modalOverlay}>
+                    <Animated.View style={[
+                        styles.modalContent,
+                        {
+                            transform: [{ scale: scaleAnim }],
+                            opacity: opacityAnim,
+                        }
+                    ]}>
+                        <View style={styles.successIconContainer}>
+                            <CheckCircle color="#10b981" size={60} />
+                        </View>
+                        <Text style={styles.modalTitle}>¡Pago Exitoso!</Text>
+                        <Text style={styles.modalText}>
+                            El pago se ha procesado correctamente
+                        </Text>
+                        {comprobante && (
+                            <Text style={styles.comprobanteText}>
+                                Comprobante: {comprobante}
+                            </Text>
+                        )}
+                    </Animated.View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -319,6 +443,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 12,
     },
+    disabledInput: {
+        backgroundColor: '#f3f4f6',
+        color: '#9ca3af',
+    },
     cambioContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -355,11 +483,63 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
+    errorContainer: {
+        backgroundColor: '#fee2e2',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
     errorText: {
         fontSize: 14,
         color: '#ef4444',
         textAlign: 'center',
         fontWeight: '500',
+    },
+    // Estilos para el modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        width: '80%',
+        maxWidth: 300,
+    },
+    successIconContainer: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    modalText: {
+        fontSize: 16,
+        color: '#6b7280',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    comprobanteText: {
+        fontSize: 14,
+        color: '#10b981',
+        fontWeight: '600',
+        textAlign: 'center',
+        marginTop: 8,
     },
 });
 
