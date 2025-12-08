@@ -8,8 +8,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { Order, Payment } from '@/types/database.types';
 import { CreditCard, Banknote, Smartphone, Wallet } from 'lucide-react-native';
 
@@ -17,62 +15,6 @@ export default function PaymentScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('status', 'pendiente')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo cargar los pedidos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePayment = async (method: 'efectivo' | 'yape' | 'plin' | 'tarjeta') => {
-    if (!selectedOrder) {
-      Alert.alert('Error', 'Selecciona un pedido primero');
-      return;
-    }
-
-    try {
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          order_id: selectedOrder.id,
-          method,
-          amount: selectedOrder.total,
-          status: 'completado',
-        });
-
-      if (paymentError) throw paymentError;
-
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({ status: 'completado' })
-        .eq('id', selectedOrder.id);
-
-      if (orderError) throw orderError;
-
-      Alert.alert('Éxito', 'Pago procesado correctamente');
-      setSelectedOrder(null);
-      loadOrders();
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo procesar el pago');
-    }
-  };
 
   const paymentMethods = [
     { id: 'efectivo', label: 'Efectivo', icon: Banknote, color: '#28a745' },
@@ -136,7 +78,6 @@ export default function PaymentScreen() {
                   styles.methodCard,
                   { borderLeftColor: method.color },
                 ]}
-                onPress={() => handlePayment(method.id as any)}
               >
                 <View
                   style={[

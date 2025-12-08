@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { supabase } from '@/lib/supabase';
 import { Product } from '@/types/database.types';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
@@ -20,27 +19,6 @@ export default function Menu() {
 
 
   const  queryMenu =  useMenu()
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category', 'menu')
-        .order('name');
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo cargar el menú');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);

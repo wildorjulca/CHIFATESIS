@@ -12,6 +12,7 @@
 import { useMesa } from '@/hooks/mesa/useMesa';
 import { Mesa } from '@/types/mesa.types';
 import { router } from 'expo-router';
+import { UtensilsCrossed } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import {
     View,
@@ -89,10 +90,11 @@ const SelectTableScreen = () => {
             style={[stylesStep1.container, { paddingBottom: safeAreaInsents.bottom }]}
         >
             <View style={stylesStep1.header}>
-                <Text style={stylesStep1.headerTitle}>🏠 Seleccionar Mesa</Text>
-                <Text style={stylesStep1.headerSubtitle}>
-                    Elige una mesa disponible para comenzar
-                </Text>
+                <View style={stylesStep1.headerTitle}>
+                    <UtensilsCrossed size={28} color="#e63946" />
+                    <Text style={stylesStep1.headerText}>Selecionar una Mesa</Text>
+                </View>
+                <Text style={stylesStep1.subHeader}>Administrar mesas disponibles</Text>
             </View>
 
             <FlatList
@@ -126,20 +128,26 @@ const stylesStep1 = StyleSheet.create({
         backgroundColor: '#fff',
     },
     header: {
-        backgroundColor: '#e63946',
+        backgroundColor: '#fff',
         padding: 20,
-        borderBottomWidth: 2,
-        borderBottomColor: '#fed7aa',
+        paddingTop: 60,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e9ecef',
     },
     headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
         marginBottom: 4,
     },
-    headerSubtitle: {
+    headerText: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#343a40',
+    },
+    subHeader: {
         fontSize: 14,
-        color: '#ffff',
+        color: '#6c757d',
     },
     list: {
         padding: 16,

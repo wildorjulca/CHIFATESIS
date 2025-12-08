@@ -1,62 +1,11 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { Trash2, Plus, Minus } from 'lucide-react-native';
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, clearCart, getTotal } = useCart();
-  const { user } = useAuth();
   const router = useRouter();
-
-  const handleConfirmOrder = async () => {
-    if (cart.length === 0) {
-      Alert.alert('Carrito vacío', 'Agrega productos antes de confirmar');
-      return;
-    }
-
-    try {
-      const total = getTotal();
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id,
-          total,
-          status: 'pendiente',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      const orderItems = cart.map((item) => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      Alert.alert('Éxito', 'Pedido confirmado correctamente', [
-        {
-          text: 'OK',
-          onPress: () => {
-            clearCart();
-            router.push('/(tabs)/payment');
-          },
-        },
-      ]);
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo confirmar el pedido');
-    }
-  };
 
   const renderItem = ({ item }: any) => (
     <View style={styles.item}>
@@ -120,7 +69,6 @@ export default function Cart() {
 
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={handleConfirmOrder}
             >
               <Text style={styles.confirmButtonText}>Confirmar Pedido</Text>
             </TouchableOpacity>

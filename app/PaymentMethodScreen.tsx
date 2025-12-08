@@ -1,8 +1,3 @@
-// =====================================================
-// PASO 4: MÉTODO DE PAGO
-// Componente: PaymentMethodScreen.tsx
-// =====================================================
-
 import React from 'react';
 import {
   View,

@@ -9,7 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
 import { useAuthMutation } from '@/hooks/auth/useAuthMutation';
 
 export default function Login() {
@@ -21,7 +20,6 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
   const router = useRouter();
 
   // 

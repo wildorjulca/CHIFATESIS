@@ -69,7 +69,7 @@ export default function Home() {
     {
       title: 'Menú',
       icon: Utensils,
-      route: '/(tabs)/menu',
+      route: '/MenuListScreen',
       color: '#e63946',
       permission: 'menu',
       description: 'Ver platos del menú',
@@ -78,7 +78,7 @@ export default function Home() {
     {
       title: 'Bebidas',
       icon: Coffee,
-      route: '/(tabs)/drinks',
+      route: '/DrinksMenuScreen',
       color: '#f77f00',
       permission: 'bebidas',
       description: 'Ver bebidas disponibles',

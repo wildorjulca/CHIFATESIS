@@ -17,7 +17,8 @@ import {
     CheckCircle,
     User,
     Table,
-    AlertCircle
+    AlertCircle,
+    BanknoteArrowDown
 } from 'lucide-react-native';
 import { usePedidoDetallePorPagar } from '@/hooks/pedido/usePedidoDetallePorPagar';
 
@@ -123,8 +124,14 @@ const CajeroDashboard = () => {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.title}>Pedidos por Cobrar</Text>
+                <View style={styles.headerTitle}>
+                    <BanknoteArrowDown size={28} color="#e63946" />
+                    <Text style={styles.headerText}>Pedidos por Cobrar</Text>
+                </View>
+                <Text style={styles.subHeader}>Administrar pedidos y cobrar</Text>
+            </View>
 
+            <View>
                 <View style={styles.statsContainer}>
                     <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{pedidosPorPagar.length}</Text>
@@ -242,10 +249,26 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     header: {
-        padding: 16,
         backgroundColor: '#fff',
+        padding: 20,
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: '#e9ecef',
+    },
+    headerTitle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 4,
+    },
+    headerText: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#343a40',
+    },
+    subHeader: {
+        fontSize: 14,
+        color: '#6c757d',
     },
     title: {
         fontSize: 24,
