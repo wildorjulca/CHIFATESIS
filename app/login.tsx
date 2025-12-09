@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,89 +6,148 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthMutation } from '@/hooks/auth/useAuthMutation';
 
+type AuthMode = 'login' | 'signup';
+type UserRole = 'admin' | 'cajero' | 'cliente';
+
 export default function Login() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'admin' | 'cajero' | 'cliente'>('cliente');
+  const [role, setRole] = useState<UserRole>('cliente');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
+  const authMutation = useAuthMutation();
 
-  // 
-  const authMutation = useAuthMutation()
+  // Efecto para manejar éxito/error de la mutación
+  useEffect(() => {
+    if (authMutation.isSuccess) {
+      // Limpiar formulario
+      resetForm();
+      
+      // Redirigir
+      router.replace('/(tabs)/home');
+    }
+    
+    if (authMutation.error) {
+      setError(authMutation.error.message || 'Error de autenticación');
+      setIsSubmitting(false);
+    }
+  }, [authMutation.isSuccess, authMutation.error]);
+
+  const validateForm = (): boolean => {
+    setError('');
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor ingrese un email válido');
+      return false;
+    }
+
+    // Validar contraseña
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return false;
+    }
+
+    if (mode === 'signup') {
+      if (!name.trim()) {
+        setError('Por favor ingrese su nombre');
+        return false;
+      }
+      
+      // Validar contraseña más fuerte para registro
+      if (password.length < 8) {
+        setError('La contraseña debe tener al menos 8 caracteres para registro');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setName('');
+    setRole('cliente');
+    setError('');
+    setIsSubmitting(false);
+  };
 
   const handleAuth = async () => {
-    if (!email || !password) {
-      setError('Por favor complete todos los campos');
+    if (!validateForm()) {
       return;
     }
 
-    if (isSignUp && !name) {
-      setError('Por favor ingrese su nombre');
-      return;
-    }
-
+    setIsSubmitting(true);
     setError('');
-    setLoading(true);
 
     try {
-
-      const user = {
+      const userData = {
         correo: email,
-        clave: password
-      }
-      authMutation.mutate(user)
-      // if (isSignUp) {
-      //   await signUp(email, password, name, role);
-      //   Alert.alert('Éxito', 'Cuenta creada correctamente');
-      // } else {
-      //   await signIn(email, password);
-      // }
-      // router.replace('/(tabs)/home');
+        clave: password,
+        ...(mode === 'signup' && {
+          nombre: name,
+          rol: role,
+          // Agregar otros campos necesarios para registro
+        }),
+      };
 
-
+      authMutation.mutate(userData);
     } catch (err: any) {
-      setError(err.message || 'Error al autenticar');
-    } finally {
-      setLoading(false);
+      setError(err.message || 'Error inesperado');
+      setIsSubmitting(false);
     }
+  };
+
+  const switchMode = () => {
+    setMode(mode === 'login' ? 'signup' : 'login');
+    setError('');
   };
 
   const roles = [
     { value: 'cliente', label: 'Cliente' },
     { value: 'cajero', label: 'Cajero' },
     { value: 'admin', label: 'Administrador' },
-  ];
+  ] as const;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.card}>
         <Text style={styles.title}>ChifaPedidos</Text>
         <Text style={styles.subtitle}>
-          {isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'}
+          {mode === 'signup' ? 'Crear Cuenta' : 'Iniciar Sesión'}
         </Text>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        {authMutation.error ? <Text style={styles.errorText}>{authMutation.error.message}</Text> : null}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
 
-
-
-        {isSignUp && (
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-          />
+        {mode === 'signup' && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre completo"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              editable={!isSubmitting}
+            />
+          </>
         )}
 
         <TextInput
@@ -98,6 +157,8 @@ export default function Login() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          autoComplete="email"
+          editable={!isSubmitting}
         />
 
         <TextInput
@@ -106,9 +167,10 @@ export default function Login() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          editable={!isSubmitting}
         />
 
-        {isSignUp && (
+        {mode === 'signup' && (
           <View style={styles.roleContainer}>
             <Text style={styles.roleLabel}>Rol:</Text>
             <View style={styles.roleButtons}>
@@ -118,8 +180,10 @@ export default function Login() {
                   style={[
                     styles.roleButton,
                     role === r.value && styles.roleButtonActive,
+                    isSubmitting && styles.disabled,
                   ]}
-                  onPress={() => setRole(r.value as any)}
+                  onPress={() => !isSubmitting && setRole(r.value)}
+                  disabled={isSubmitting}
                 >
                   <Text
                     style={[
@@ -138,29 +202,38 @@ export default function Login() {
         <TouchableOpacity
           style={[
             styles.button,
-            (loading || authMutation.isPending) && styles.buttonDisabled,
+            (isSubmitting || authMutation.isPending) && styles.buttonDisabled,
           ]}
           onPress={handleAuth}
-          disabled={authMutation.isPending}
+          disabled={isSubmitting || authMutation.isPending}
         >
-          <Text style={styles.buttonText}>
-            {authMutation.isPending ? 'Cargando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
-          </Text>
+          {isSubmitting || authMutation.isPending ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {mode === 'signup' ? 'Registrarse' : 'Ingresar'}
+            </Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.switchButton}
-          onPress={() => {
-            setIsSignUp(!isSignUp);
-            setError('');
-          }}
+          style={[styles.switchButton, isSubmitting && styles.disabled]}
+          onPress={switchMode}
+          disabled={isSubmitting}
         >
           <Text style={styles.switchButtonText}>
-            {isSignUp
+            {mode === 'signup'
               ? '¿Ya tienes cuenta? Inicia sesión'
               : '¿No tienes cuenta? Regístrate'}
           </Text>
         </TouchableOpacity>
+
+        {/* Opcional: Botón de olvidé contraseña */}
+        {mode === 'login' && (
+          <TouchableOpacity style={styles.forgotPasswordButton}>
+            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
@@ -250,6 +323,8 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
+    minHeight: 52,
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -262,19 +337,33 @@ const styles = StyleSheet.create({
   switchButton: {
     alignItems: 'center',
     padding: 8,
+    marginBottom: 8,
   },
   switchButtonText: {
     color: '#e63946',
     fontSize: 14,
     fontWeight: '600',
   },
-  errorText: {
-    color: '#e63946',
-    fontSize: 14,
-    marginBottom: 16,
-    textAlign: 'center',
+  errorContainer: {
     backgroundColor: '#fee',
     padding: 12,
     borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#e63946',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  forgotPasswordButton: {
+    alignItems: 'center',
+    padding: 8,
+  },
+  forgotPasswordText: {
+    color: '#6c757d',
+    fontSize: 14,
   },
 });

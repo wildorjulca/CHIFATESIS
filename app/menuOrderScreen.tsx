@@ -51,7 +51,7 @@ const ImprovedOrderMenu = () => {
 
   // Barra inferior fija del pedido
   const FixedOrderBar = () => (
-    <View style={styles.fixedOrderBar}>
+    <View style={[styles.fixedOrderBar, { marginBottom: safeAreaInsets.bottom }]}>
       <View style={styles.orderSummary}>
         <View style={styles.orderHeader}>
           <Text style={styles.orderTitle}>Pedido Actual</Text>
@@ -117,7 +117,7 @@ const ImprovedOrderMenu = () => {
   );
 
   return (
-    <View style={[styles.container, { paddingBottom: safeAreaInsets.bottom }]}>
+    <View style={styles.container}>
       {/* HEADER CON TABS */}
       <View style={styles.header}>
         <View style={styles.tabsContainer}>
@@ -144,124 +144,126 @@ const ImprovedOrderMenu = () => {
         </View>
       </View>
 
-      {/* CONTENIDO DEL MENÚ */}
-      <ScrollView
-        style={styles.menuScroll}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.menuContainer}
-      >
-        {activeCategory === 'Platos' ? (
-          <>
-            {queryMenu.isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#dc2626" />
-                <Text style={styles.loadingText}>Cargando platos...</Text>
-              </View>
-            )}
+      {/* CONTENIDO DEL MENÚ - Usa flex para separar del footer */}
+      <View style={styles.contentContainer}>
+        <ScrollView
+          style={styles.menuScroll}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.menuContainer}
+        >
+          {activeCategory === 'Platos' ? (
+            <>
+              {queryMenu.isLoading && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#dc2626" />
+                  <Text style={styles.loadingText}>Cargando platos...</Text>
+                </View>
+              )}
 
-            {queryMenu.data?.map((item: Menu) => (
-              <TouchableOpacity
-                key={item.id_menu}
-                style={styles.menuItem}
-                onPress={() => {
-                  agregarItem(
-                    {
-                      id_menu: item.id_menu,
-                      nombre_plato: item.nombre_plato,
-                      precio: Number(item.precio),
-                      categoria: item.categoria,
-                      disponible: item.disponible,
-                    },
-                    "menu"
-                  );
-                }}
-              >
-                <Image
-                  style={styles.menuItemImage}
-                  source={{
-                    uri: item.imagen_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
+              {queryMenu.data?.map((item: Menu) => (
+                <TouchableOpacity
+                  key={item.id_menu}
+                  style={styles.menuItem}
+                  onPress={() => {
+                    agregarItem(
+                      {
+                        id_menu: item.id_menu,
+                        nombre_plato: item.nombre_plato,
+                        precio: Number(item.precio),
+                        categoria: item.categoria,
+                        disponible: item.disponible,
+                      },
+                      "menu"
+                    );
                   }}
-                  resizeMode="cover"
-                />
-                <View style={styles.menuItemInfo}>
-                  <Text style={styles.menuItemName}>{item.nombre_plato}</Text>
-                  <Text style={styles.menuItemDescription} numberOfLines={2}>
-                    {item.descripcion || 'Plato tradicional peruano'}
-                  </Text>
-                  {item.tiempo_preparacion && (
-                    <View style={styles.prepTime}>
-                      <Clock color="#6b7280" size={14} />
-                      <Text style={styles.prepTimeText}>{item.tiempo_preparacion} min</Text>
-                    </View>
-                  )}
-                  <Text style={styles.menuItemPrice}>S/. {item.precio}</Text>
+                >
+                  <Image
+                    style={styles.menuItemImage}
+                    source={{
+                      uri: item.imagen_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
+                    }}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.menuItemInfo}>
+                    <Text style={styles.menuItemName}>{item.nombre_plato}</Text>
+                    <Text style={styles.menuItemDescription} numberOfLines={2}>
+                      {item.descripcion || 'Plato tradicional peruano'}
+                    </Text>
+                    {item.tiempo_preparacion && (
+                      <View style={styles.prepTime}>
+                        <Clock color="#6b7280" size={14} />
+                        <Text style={styles.prepTimeText}>{item.tiempo_preparacion} min</Text>
+                      </View>
+                    )}
+                    <Text style={styles.menuItemPrice}>S/. {item.precio}</Text>
+                  </View>
+                  <View style={styles.addButton}>
+                    <Text style={styles.addButtonText}>+</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </>
+          ) : activeCategory === 'Bebidas' ? (
+            <>
+              {queryBebida.isLoading && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#dc2626" />
+                  <Text style={styles.loadingText}>Cargando bebidas...</Text>
                 </View>
-                <View style={styles.addButton}>
-                  <Text style={styles.addButtonText}>+</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </>
-        ) : activeCategory === 'Bebidas' ? (
-          <>
-            {queryBebida.isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#dc2626" />
-                <Text style={styles.loadingText}>Cargando bebidas...</Text>
-              </View>
-            )}
-            {queryBebida.data?.map((item: Bebida) => (
-              <TouchableOpacity
-                key={item.id_bebida}
-                style={styles.menuItem}
-                onPress={() => {
-                  agregarItem(
-                    {
-                      id_bebida: item.id_bebida,
-                      nombre_bebida: item.nombre_bebida,
-                      precio: Number(item.precio),
-                      categoria: item.categoria,
-                      disponible: item.disponible,
-                    },
-                    "bebida"
-                  );
-                }}
-              >
-                <Image
-                  style={styles.menuItemImage}
-                  source={{
-                    uri: item.imagen_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
+              )}
+              {queryBebida.data?.map((item: Bebida) => (
+                <TouchableOpacity
+                  key={item.id_bebida}
+                  style={styles.menuItem}
+                  onPress={() => {
+                    agregarItem(
+                      {
+                        id_bebida: item.id_bebida,
+                        nombre_bebida: item.nombre_bebida,
+                        precio: Number(item.precio),
+                        categoria: item.categoria,
+                        disponible: item.disponible,
+                      },
+                      "bebida"
+                    );
                   }}
-                  resizeMode="cover"
-                />
-                <View style={styles.menuItemInfo}>
-                  <Text style={styles.menuItemName}>{item.nombre_bebida}</Text>
-                  <Text style={styles.menuItemDescription}>
-                    {item.descripcion || 'Bebida refrescante'}
-                  </Text>
-                  {item.tamano && (
-                    <Text style={styles.sizeText}>Tamaño: {item.tamano}</Text>
-                  )}
-                  <Text style={styles.menuItemPrice}>S/. {item.precio}</Text>
-                </View>
-                <View style={styles.addButton}>
-                  <Text style={styles.addButtonText}>+</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </>
-        ) : (
-          <View style={styles.emptyCategory}>
-            <Text style={styles.emptyCategoryIcon}>🍰</Text>
-            <Text style={styles.emptyCategoryTitle}>Postres</Text>
-            <Text style={styles.emptyCategoryText}>
-              Próximamente tendremos deliciosos postres
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+                >
+                  <Image
+                    style={styles.menuItemImage}
+                    source={{
+                      uri: item.imagen_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
+                    }}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.menuItemInfo}>
+                    <Text style={styles.menuItemName}>{item.nombre_bebida}</Text>
+                    <Text style={styles.menuItemDescription}>
+                      {item.descripcion || 'Bebida refrescante'}
+                    </Text>
+                    {item.tamano && (
+                      <Text style={styles.sizeText}>Tamaño: {item.tamano}</Text>
+                    )}
+                    <Text style={styles.menuItemPrice}>S/. {item.precio}</Text>
+                  </View>
+                  <View style={styles.addButton}>
+                    <Text style={styles.addButtonText}>+</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </>
+          ) : (
+            <View style={styles.emptyCategory}>
+              <Text style={styles.emptyCategoryIcon}>🍰</Text>
+              <Text style={styles.emptyCategoryTitle}>Postres</Text>
+              <Text style={styles.emptyCategoryText}>
+                Próximamente tendremos deliciosos postres
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
 
-      {/* BARRA INFERIOR FIJA DEL PEDIDO */}
+      {/* BARRA INFERIOR FIJA DEL PEDIDO - Ahora fuera del ScrollView */}
       <FixedOrderBar />
     </View>
   );
@@ -315,6 +317,10 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
 
+  contentContainer: {
+    flex: 1, // Toma todo el espacio disponible
+  },
+
   // CONTENIDO DEL MENÚ
   menuScroll: {
     flex: 1,
@@ -322,7 +328,7 @@ const styles = StyleSheet.create({
 
   menuContainer: {
     padding: 16,
-    paddingBottom: 200,
+    paddingBottom: 16, // Solo padding normal
   },
 
   loadingContainer: {
@@ -441,21 +447,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // BARRA INFERIOR FIJA
+  // BARRA INFERIOR FIJA - Ahora es un elemento normal en el flex
   fixedOrderBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: '#fff',
     borderTopWidth: 2,
     borderTopColor: '#e5e7eb',
     padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
 
   orderSummary: {

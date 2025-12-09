@@ -15,14 +15,14 @@ export default function Home() {
   // PERMISOS CORREGIDOS - MÁS RESTRICTIVOS
   const rolePermissions = {
     admin: [
-      'nuevo-pedido', 'pedidos-cobrar', 'menu', 'bebidas', 'carrito', 
+      'nuevo-pedido', 'pedidos-cobrar', 'menu', 'bebidas',
       'pagos', 'reportes', 'gestion-usuarios', 'gestion-cocina'
     ],
     cajero: [
       'pedidos-cobrar', 'pagos', 'reportes'  // Cajero NO crea pedidos, solo cobra
     ],
     mesero: [
-      'nuevo-pedido', 'menu', 'bebidas', 'carrito'  // Mesero NO ve pagos ni reportes
+      'nuevo-pedido', 'menu', 'bebidas'  // Mesero NO ve pagos ni reportes
     ],
     cocinero: [
       'gestion-cocina'  // Cocinero SOLO gestiona cocina
@@ -84,15 +84,15 @@ export default function Home() {
       description: 'Ver bebidas disponibles',
       roles: ['admin', 'mesero']
     },
-    {
-      title: 'Carrito',
-      icon: ShoppingCart,
-      route: '/(tabs)/cart',
-      color: '#06a77d',
-      permission: 'carrito',
-      description: 'Ver carrito de compras',
-      roles: ['admin', 'mesero']
-    },
+    // {
+    //   title: 'Carrito',
+    //   icon: ShoppingCart,
+    //   route: '/(tabs)/cart',
+    //   color: '#06a77d',
+    //   permission: 'carrito',
+    //   description: 'Ver carrito de compras',
+    //   roles: ['admin', 'mesero']
+    // },
     {
       title: 'Pagos',
       icon: CreditCard,
@@ -141,7 +141,7 @@ export default function Home() {
 
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>Módulos Disponibles</Text>
-        
+
         {filteredMenuItems.length > 0 ? (
           <View style={styles.grid}>
             {filteredMenuItems.map((item, index) => (

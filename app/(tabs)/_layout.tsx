@@ -7,9 +7,9 @@ export default function TabsLayout() {
 
   // DEFINIR PERMISOS CORRECTOS POR ROL
   const rolePermissions = {
-    admin: ['home', 'menu', 'drinks', 'cart', 'payment', 'reports'],
+    admin: ['home', 'menu', 'drinks', 'payment', 'reports'],
     cajero: ['home', 'payment', 'reports'],
-    mesero: ['home', 'menu', 'drinks', 'cart'],
+    mesero: ['home', 'menu', 'drinks'],
     cocinero: ['home', 'reports'],
   };
 
@@ -65,7 +65,7 @@ export default function TabsLayout() {
           href: allowedTabs.includes('drinks') ? undefined : null,
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="cart"
         options={{
           title: 'Carrito',
@@ -74,7 +74,7 @@ export default function TabsLayout() {
           ),
           href: allowedTabs.includes('cart') ? undefined : null,
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="payment"
         options={{
