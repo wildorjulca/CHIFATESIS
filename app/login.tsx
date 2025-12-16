@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthMutation } from '@/hooks/auth/useAuthMutation';
@@ -21,26 +22,12 @@ export default function Login() {
   const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>('cliente');
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
-  const authMutation = useAuthMutation();
 
-  // Efecto para manejar éxito/error de la mutación
-  useEffect(() => {
-    if (authMutation.isSuccess) {
-      // Limpiar formulario
-      resetForm();
-      
-      // Redirigir
-      router.replace('/(tabs)/home');
-    }
-    
-    if (authMutation.error) {
-      setError(authMutation.error.message || 'Error de autenticación');
-      setIsSubmitting(false);
-    }
-  }, [authMutation.isSuccess, authMutation.error]);
+  // Verifica si tu hook acepta opciones
+  // Si no, usa este enfoque alternativo:
+  const authMutation = useAuthMutation();
 
   const validateForm = (): boolean => {
     setError('');
@@ -63,8 +50,7 @@ export default function Login() {
         setError('Por favor ingrese su nombre');
         return false;
       }
-      
-      // Validar contraseña más fuerte para registro
+
       if (password.length < 8) {
         setError('La contraseña debe tener al menos 8 caracteres para registro');
         return false;
@@ -74,45 +60,44 @@ export default function Login() {
     return true;
   };
 
+  const handleAuth = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setError('');
+
+    const userData = {
+      correo: email,
+      clave: password,
+      ...(mode === 'signup' && {
+        nombre: name,
+        rol: role,
+      }),
+    };
+
+    // Solo llama mutate, el hook ya maneja la redirección
+    authMutation.mutate(userData);
+  };
+
+  // Si el hook ya maneja la redirección, NO uses useEffect
+  // El hook ya tiene su propio onSuccess con router.navigate
+
+  const switchMode = () => {
+    setMode(mode === 'login' ? 'signup' : 'login');
+    setError('');
+  };
+
   const resetForm = () => {
     setEmail('');
     setPassword('');
     setName('');
     setRole('cliente');
     setError('');
-    setIsSubmitting(false);
   };
 
-  const handleAuth = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const userData = {
-        correo: email,
-        clave: password,
-        ...(mode === 'signup' && {
-          nombre: name,
-          rol: role,
-          // Agregar otros campos necesarios para registro
-        }),
-      };
-
-      authMutation.mutate(userData);
-    } catch (err: any) {
-      setError(err.message || 'Error inesperado');
-      setIsSubmitting(false);
-    }
-  };
-
-  const switchMode = () => {
-    setMode(mode === 'login' ? 'signup' : 'login');
-    setError('');
-  };
+  // Muestra error si la mutación falló
+  const displayError = error || (authMutation.error as any)?.message;
 
   const roles = [
     { value: 'cliente', label: 'Cliente' },
@@ -121,7 +106,7 @@ export default function Login() {
   ] as const;
 
   return (
-    <ScrollView 
+    <ScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
@@ -131,9 +116,9 @@ export default function Login() {
           {mode === 'signup' ? 'Crear Cuenta' : 'Iniciar Sesión'}
         </Text>
 
-        {error ? (
+        {displayError ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>{displayError}</Text>
           </View>
         ) : null}
 
@@ -145,7 +130,7 @@ export default function Login() {
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
-              editable={!isSubmitting}
+              editable={!authMutation.isPending}
             />
           </>
         )}
@@ -158,7 +143,7 @@ export default function Login() {
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
-          editable={!isSubmitting}
+          editable={!authMutation.isPending}
         />
 
         <TextInput
@@ -167,7 +152,7 @@ export default function Login() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          editable={!isSubmitting}
+          editable={!authMutation.isPending}
         />
 
         {mode === 'signup' && (
@@ -180,10 +165,10 @@ export default function Login() {
                   style={[
                     styles.roleButton,
                     role === r.value && styles.roleButtonActive,
-                    isSubmitting && styles.disabled,
+                    authMutation.isPending && styles.disabled,
                   ]}
-                  onPress={() => !isSubmitting && setRole(r.value)}
-                  disabled={isSubmitting}
+                  onPress={() => !authMutation.isPending && setRole(r.value)}
+                  disabled={authMutation.isPending}
                 >
                   <Text
                     style={[
@@ -202,12 +187,12 @@ export default function Login() {
         <TouchableOpacity
           style={[
             styles.button,
-            (isSubmitting || authMutation.isPending) && styles.buttonDisabled,
+            authMutation.isPending && styles.buttonDisabled,
           ]}
           onPress={handleAuth}
-          disabled={isSubmitting || authMutation.isPending}
+          disabled={authMutation.isPending}
         >
-          {isSubmitting || authMutation.isPending ? (
+          {authMutation.isPending ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <Text style={styles.buttonText}>
@@ -217,9 +202,9 @@ export default function Login() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.switchButton, isSubmitting && styles.disabled]}
+          style={[styles.switchButton, authMutation.isPending && styles.disabled]}
           onPress={switchMode}
-          disabled={isSubmitting}
+          disabled={authMutation.isPending}
         >
           <Text style={styles.switchButtonText}>
             {mode === 'signup'
@@ -227,13 +212,6 @@ export default function Login() {
               : '¿No tienes cuenta? Regístrate'}
           </Text>
         </TouchableOpacity>
-
-        {/* Opcional: Botón de olvidé contraseña */}
-        {mode === 'login' && (
-          <TouchableOpacity style={styles.forgotPasswordButton}>
-            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </ScrollView>
   );

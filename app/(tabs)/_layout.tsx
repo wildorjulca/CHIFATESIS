@@ -65,16 +65,6 @@ export default function TabsLayout() {
           href: allowedTabs.includes('drinks') ? undefined : null,
         }}
       />
-      {/* <Tabs.Screen
-        name="cart"
-        options={{
-          title: 'Carrito',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <ShoppingCart color={color} size={size} />
-          ),
-          href: allowedTabs.includes('cart') ? undefined : null,
-        }}
-      /> */}
       <Tabs.Screen
         name="payment"
         options={{

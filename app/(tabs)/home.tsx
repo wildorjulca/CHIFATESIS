@@ -84,19 +84,10 @@ export default function Home() {
       description: 'Ver bebidas disponibles',
       roles: ['admin', 'mesero']
     },
-    // {
-    //   title: 'Carrito',
-    //   icon: ShoppingCart,
-    //   route: '/(tabs)/cart',
-    //   color: '#06a77d',
-    //   permission: 'carrito',
-    //   description: 'Ver carrito de compras',
-    //   roles: ['admin', 'mesero']
-    // },
     {
       title: 'Pagos',
       icon: CreditCard,
-      route: '/(tabs)/payment',
+      route: '/PaymentMethodScreen',
       color: '#4361ee',
       permission: 'pagos',
       description: 'Gestión de pagos',
